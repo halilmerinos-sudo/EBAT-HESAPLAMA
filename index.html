@@ -2,193 +2,283 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Halı Kesim PRO AI V20</title>
+    <title>Halı Kesim PRO AI V41 - Tam Dinamik Optimizasyon Motoru</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
-        :root { --p: #27ae60; --bg: #f2f2f7; --blue: #007aff; --red: #ff3b30; --gold: #f39c12; --purple: #5856d6; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 10px; color: #1c1c1e; }
+        :root { --p: #27ae60; --bg: #f2f2f7; --blue: #007aff; --red: #ff3b30; --gold: #f39c12; }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); margin: 0; padding: 10px; color: #1c1c1e; }
         .card { background: #fff; padding: 15px; border-radius: 14px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 12px; }
         h2 { margin: 0 0 10px; font-size: 11px; color: #8e8e93; text-transform: uppercase; letter-spacing: 1px; }
         .input-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
         label { font-size: 11px; font-weight: 600; display: block; margin-bottom: 4px; color: #444; }
-        input { width: 100%; padding: 12px; border: 1px solid #d1d1d6; border-radius: 10px; font-size: 16px; box-sizing: border-box; }
-        .ebat-row { display: grid; grid-template-columns: 1.2fr 1.2fr 1fr; gap: 8px; margin-bottom: 8px; background: #f9f9f9; padding: 10px; border-radius: 10px; border: 1px solid #eee; }
-        button { border: none; padding: 16px; border-radius: 12px; font-weight: bold; font-size: 15px; cursor: pointer; transition: 0.2s; width: 100%; }
+        input { width: 100%; padding: 12px; border: 1px solid #d1d1d6; border-radius: 10px; font-size: 16px; box-sizing: border-box; -webkit-appearance: none; }
+        
+        .ebat-row { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 8px; margin-bottom: 8px; background: #f9f9f9; padding: 12px; border-radius: 10px; border: 1px solid #eee; align-items: end; }
+        button { border: none; padding: 16px; border-radius: 12px; font-weight: bold; font-size: 15px; cursor: pointer; transition: background 0.2s, transform 0.1s; width: 100%; -webkit-tap-highlight-color: transparent; }
+        button:active { transform: scale(0.98); }
         .add { background: #fff; color: var(--blue); border: 1px solid var(--blue); margin-bottom: 10px; }
         .calc { background: var(--p); color: #fff; margin-bottom: 10px; }
+        .print-btn { background: #5856d6; color: #fff; margin-bottom: 10px; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .clear { background: #fee2e2; color: var(--red); font-size: 14px; }
+        .row-del-btn { background: #fee2e2; color: var(--red); padding: 12px; font-size: 14px; border-radius: 10px; font-weight: bold; height: 46px; width: auto; }
         
-        /* Gelişmiş Öneri Butonları */
-        .oneri-box { background: #fff9e6; border: 1px solid var(--gold); border-radius: 10px; padding: 12px; margin-top: 10px; }
-        .oneri-grid { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 8px; }
-        .oneri-btn { background: #fff; border: 1px solid var(--gold); padding: 12px; border-radius: 8px; text-align: left; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-        .oneri-btn:active { transform: scale(0.98); background: #fef5d1; }
-        .oneri-info b { color: #1c1c1e; font-size: 14px; }
-        .fire-badge { font-size: 10px; padding: 3px 6px; border-radius: 4px; font-weight: bold; }
-        .f-zero { background: #d4edda; color: #155724; }
-        .f-low { background: #fff3cd; color: #856404; }
-
-        .plan-box { display: inline-block; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: bold; margin-top: 5px; }
+        .plan-box { display: inline-block; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; margin-top: 5px; }
         .yanyana { background: #e8f5e9; color: #2e7d32; border: 1px solid #2e7d32; }
-        .teksira { background: #fff3e0; color: #e65100; border: 1px solid #e65100; }
+        .fire-badge { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+        .adet-detay-box { margin-top: 6px; font-size: 13px; color: #1c1c1e; background: #f1f8e9; padding: 8px 12px; border-radius: 8px; border: 1px dashed #81c784; display: block; line-height: 1.4; }
+        .adet-badge { background: #27ae60; color: white; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 12px; }
         
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        td { padding: 12px 4px; border-bottom: 1px solid #eee; vertical-align: top; font-size: 13px; }
-        .locked { background: #f0f0f0 !important; color: #aaa; }
+        td { padding: 12px 4px; border-bottom: 1px solid #eee; vertical-align: top; font-size: 14px; }
+        
+        .total-box { background: #e3f2fd; border: 2px dashed var(--blue); padding: 15px; border-radius: 12px; text-align: center; margin-top: 15px; }
+        .total-box h3 { margin: 0 0 5px 0; color: var(--blue); font-size: 18px; }
+
+        @media print {
+            body { background: #fff; padding: 0; color: #000; }
+            .card:not(#resCard) { display: none !important; }
+            button, .row-del-btn, .clear, .add, .calc, .print-btn { display: none !important; }
+            .card { box-shadow: none; padding: 0; margin: 0; }
+            .adet-detay-box { border: 1px solid #ccc; background: #fff; }
+            .total-box { border: 2px dashed #000; background: #fff; }
+        }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>1. RULO BİLGİLERİ</h2>
+    <h2>1. RULO VE KESİM PAYI BİLGİLERİ</h2>
     <div class="input-group">
-        <div><label>Rulo Eni (cm)</label><input type="number" id="rEn" placeholder="Örn: 300" oninput="onerileriGuncelle()"></div>
-        <div><label>Rulo Max Boy (m)</label><input type="number" id="rBoy" placeholder="Örn: 30"></div>
-    </div>
-    
-    <div id="oneriAlani" class="oneri-box" style="display:none">
-        <h2 style="color:#935116; margin-bottom:5px">💡 İDEAL KOMBİNASYONLAR (Tıklayıp Ekle)</h2>
-        <div id="oneriListesi" class="oneri-grid"></div>
+        <div><label>Fiziksel Rulo Eni (cm)</label><input type="number" id="rEn" placeholder="Örn: 310"></div>
+        <div><label>Faydalı Kesim Eni (cm)</label><input type="number" id="fEn" placeholder="Örn: 300"></div>
     </div>
 </div>
 
 <div class="card">
-    <h2>2. SİPARİŞ LİSTESİ</h2>
+    <h2>2. REÇETE SİPARİŞ LİSTESİ (MÜŞTERİ TALEPLERİ)</h2>
     <div id="ebatlar"></div>
-    <button class="add" onclick="ekle()">+ Boş Satır Ekle</button>
-    <button class="calc" onclick="genelHesapla()">HESAPLAMAYI BAŞLAT</button>
-    <button class="clear" onclick="location.reload()">SAYFAYI SIFIRLA</button>
+    <button class="add" type="button" onclick="ekle()">+ Yeni Sipariş Satırı Ekle</button>
+    <button class="calc" type="button" onclick="donmasizKombinasyonMotoru()">FİRE ANALİZLİ MATRAJ HESAPLA</button>
+    <button class="clear" type="button" onclick="tumSistemi Sifirla()">TÜM SAYFAYI SIFIRLA</button>
 </div>
 
 <div class="card" id="resCard" style="display:none">
-    <h2>3. ANALİZ SONUÇLARI</h2>
-    <table><tbody id="sonuc"></tbody></table>
+    <h2>3. ÜRETİM KESİM PLANI VE EN FİRESİ RAPORU</h2>
+    <table>
+        <thead>
+            <tr style="text-align: left; color: #8e8e93; font-size: 11px;">
+                <th style="padding-bottom: 8px;">DÜZEN VE DETAYLAR</th>
+                <th style="padding-bottom: 8px;">YERLEŞİM / FİRE</th>
+                <th style="padding-bottom: 8px;">KESİLECEK BOY</th>
+            </tr>
+        </thead>
+        <tbody id="sonuc"></tbody>
+    </table>
+    <div id="genelToplamAlani"></div>
+    <div style="margin-top: 15px;">
+        <button class="print-btn" type="button" onclick="window.print()">🖨️ PLANI YAZICIYA GÖNDER / ÇIKTI AL</button>
+    </div>
 </div>
 
 <script>
-const standartEnler = [60, 80, 100, 120, 150, 200, 250];
+window.onload = function() {
+    tumSistemiSifirla();
+};
 
-window.onload = () => ekle();
-
-function onerileriGuncelle() {
-    let rEn = parseFloat(document.getElementById("rEn").value);
-    let oneriAlani = document.getElementById("oneriAlani");
-    let oneriListesi = document.getElementById("oneriListesi");
-    
-    if(!rEn || rEn < 40) { oneriAlani.style.display = "none"; return; }
-    oneriAlani.style.display = "block";
-
-    let komb = [];
-
-    // Gelişmiş Rekürsif Kombinasyon Bulucu
-    function bul(hedef, liste, suankiToplam) {
-        if (suankiToplam <= hedef && suankiToplam > hedef - 21) {
-            komb.push({dizi: [...liste], fire: hedef - suankiToplam});
-        }
-        if (suankiToplam >= hedef || liste.length >= 4) return;
-
-        for (let i = 0; i < standartEnler.length; i++) {
-            if (suankiToplam + standartEnler[i] <= hedef) {
-                bul(hedef, [...liste, standartEnler[i]], suankiToplam + standartEnler[i]);
-            }
-        }
-    }
-
-    bul(rEn, [], 0);
-
-    // Eşsiz ve en iyi kombinasyonları filtrele
-    let uniqueMap = new Map();
-    komb.forEach(x => {
-        let key = x.dizi.sort((a,b) => b-a).join('+');
-        if (!uniqueMap.has(key) || uniqueMap.get(key).fire > x.fire) {
-            uniqueMap.set(key, x);
-        }
-    });
-
-    let siraliKomb = Array.from(uniqueMap.values()).sort((a,b) => a.fire - b.fire);
-
-    oneriListesi.innerHTML = siraliKomb.slice(0, 10).map(x => `
-        <div class="oneri-btn" onclick="kombinasyonEkle('${x.dizi.join(',')}')">
-            <div class="oneri-info">
-                <b>${x.dizi.join(' + ')} cm</b>
-            </div>
-            <div class="fire-badge ${x.fire === 0 ? 'f-zero' : 'f-low'}">
-                ${x.fire === 0 ? 'TAM UYUM' : x.fire + ' cm Fire'}
-            </div>
-        </div>
-    `).join("");
+function tumSistemiSifirla() {
+    document.getElementById("rEn").value = "";
+    document.getElementById("fEn").value = "";
+    document.getElementById("ebatlar").innerHTML = "";
+    document.getElementById("resCard").style.display = "none";
+    document.getElementById("sonuc").innerHTML = "";
+    document.getElementById("genelToplamAlani").innerHTML = "";
+    ekle("", "", "");
 }
 
-function kombinasyonEkle(diziStr) {
-    let ebatlar = diziStr.split(',');
-    ebatlar.forEach(en => ekle(en));
-    document.getElementById("ebatlar").lastElementChild.scrollIntoView({behavior: "smooth"});
-}
-
-function adetKontrol(el) {
-    let row = el.closest('.ebat-row');
-    let adetInput = row.querySelector('.adet');
-    if(parseFloat(el.value) > 5) {
-        adetInput.value = ""; 
-        adetInput.disabled = true;
-        adetInput.classList.add('locked');
-        adetInput.placeholder = "Rulo";
-    } else {
-        adetInput.disabled = false;
-        adetInput.classList.remove('locked');
-        adetInput.placeholder = "Adet";
-    }
-}
-
-function ekle(enValue = "") {
+function ekle(enValue = "", boyValue = "", adetValue = "") {
     let d = document.getElementById("ebatlar");
     let div = document.createElement("div");
     div.className = "ebat-row";
     div.innerHTML = `
-        <div><label>En (cm)</label><input type="number" class="en" value="${enValue}" placeholder="En"></div>
-        <div><label>Boy (m)</label><input type="number" class="boy" placeholder="Boy" oninput="adetKontrol(this)"></div>
-        <div><label>Adet</label><input type="number" class="adet" placeholder="Adet"></div>`;
+        <div><label>Halı Eni (cm)</label><input type="number" class="en" value="${enValue}" placeholder="Örn: 80"></div>
+        <div><label>Boyu (Metre)</label><input type="number" step="0.01" class="boy" value="${boyValue}" placeholder="Örn: 1.5"></div>
+        <div><label>Sipariş Adedi</label><input type="number" class="adet" value="${adetValue}" placeholder="Örn: 10"></div>
+        <div><button class="row-del-btn" type="button" onclick="this.closest('.ebat-row').remove()">Sil</button></div>`;
     d.appendChild(div);
 }
 
-function genelHesapla() {
+// Tüm olası kombinasyonları üreten özyinelemeli (recursive) fonksiyon
+function kombinasyonlariUret(ebatlar, maxEn) {
+    let sonuclar = [];
+    
+    function bul(mevcutKombinasyon, baslangicIndex, mevcutToplam) {
+        if (mevcutToplam > 0) {
+            sonuclar.push([...mevcutKombinasyon]);
+        }
+        for (let i = baslangicIndex; i < ebatlar.length; i++) {
+            if (mevcutToplam + ebatlar[i] <= maxEn) {
+                mevcutKombinasyon.push(ebatlar[i]);
+                bul(mevcutKombinasyon, i, mevcutToplam + ebatlar[i]);
+                mevcutKombinasyon.pop();
+            }
+        }
+    }
+    
+    bul([], 0, 0);
+    return sonuclar;
+}
+
+function donmasizKombinasyonMotoru() {
     let R_EN = parseFloat(document.getElementById("rEn").value);
-    let R_MAX = parseFloat(document.getElementById("rBoy").value);
-    if(!R_EN) { alert("Rulo Enini girin!"); return; }
+    let F_EN = parseFloat(document.getElementById("fEn").value);
+    
+    if (!R_EN || !F_EN) {
+        alert("Lütfen önce Fiziksel Rulo Eni ve Faydalı Kesim Eni bilgilerini giriniz!");
+        return;
+    }
 
     let rows = document.querySelectorAll(".ebat-row");
-    let tb = document.getElementById("sonuc");
-    tb.innerHTML = "";
-    let hasData = false;
-
-    rows.forEach((row, index) => {
-        let e = parseFloat(row.querySelector(".en").value);
-        let b = parseFloat(row.querySelector(".boy").value);
-        let a = parseFloat(row.querySelector(".adet").value) || 1;
-
-        if(e > 0 && b > 0) {
-            hasData = true;
-            let isRulo = b > 5;
-            let yanYana = Math.floor(R_EN / e);
-            let netAdet = isRulo ? 1 : a;
-            let siraSayisi = Math.ceil(netAdet / yanYana);
-            let toplamM = siraSayisi * b;
-            
-            let rowStyle = `border-left: 5px solid ${['#007aff','#5856d6','#f39c12','#27ae60'][index%4]}`;
-
-            tb.innerHTML += `
-            <tr style="${rowStyle}">
-                <td><b>${e}x${b*100} cm</b><br><small>${isRulo ? 'Rulo' : a + ' Adet'}</small></td>
-                <td><div class="plan-box ${yanYana > 1 && !isRulo ? 'yanyana' : 'teksira'}">${(isRulo || yanYana === 1) ? 'TEK SIRA' : yanYana + ' YAN YANA'}</div></td>
-                <td><b style="color:var(--blue)">${toplamM.toFixed(2)} m</b><br><small style="color:green">${((e*b*netAdet)/100).toFixed(2)} m²</small></td>
-            </tr>`;
+    let havuz = {};
+    let birimBoylar = {};
+    let benzersizEbatlar = [];
+    let veriVarMi = false;
+    
+    rows.forEach(row => {
+        let en = parseFloat(row.querySelector(".en").value);
+        let boy = parseFloat(row.querySelector(".boy").value) || 0;
+        let adet = parseFloat(row.querySelector(".adet").value) || 0;
+        
+        if (en > 0 && boy > 0 && adet > 0) {
+            let toplamMetraj = boy * adet;
+            havuz[en] = (havuz[en] || 0) + toplamMetraj;
+            birimBoylar[en] = boy;
+            if (!benzersizEbatlar.includes(en)) benzersizEbatlar.push(en);
+            veriVarMi = true;
         }
     });
 
-    if(hasData) {
-        document.getElementById("resCard").style.display = "block";
-        document.getElementById("resCard").scrollIntoView({behavior: "smooth"});
+    if (!veriVarMi) {
+        alert("Lütfen en az bir satıra geçerli ebat ve adet giriniz!");
+        return;
     }
+
+    // Girdilere göre olası TÜM kombinasyon şablonlarını canlı türet
+    let tumKombiler = kombinasyonlariUret(benzersizEbatlar, F_EN);
+
+    // Kombinasyonları verimliliğe (en az fire verene) göre sırala
+    let siraliKombiler = tumKombiler.map(kombi => {
+        let toplamEn = kombi.reduce((a, b) => a + b, 0);
+        let fire = F_EN - toplamEn;
+        
+        // Her ebadın bu kombinasyonda kaç kez geçtiğini say
+        let sayim = {};
+        kombi.forEach(e => { sayim[e] = (sayim[e] || 0) + 1; });
+        
+        return { kombi, fire, sayim, toplamEn };
+    }).sort((a, b) => a.fire - b.fire); // En küçük fire ilk sıraya
+
+    let tb = document.getElementById("sonuc");
+    tb.innerHTML = "";
+    let planlar = [];
+    let netToplamBoy = 0;
+
+    // Kademeli Havuz Tüketme Döngüsü
+    let donguLimiti = 0;
+    while (donguLimiti < 200) {
+        let enIyiKombi = null;
+        let maksimumKesimBoyu = 0;
+
+        // Mevcut havuz durumuna göre kullanılabilir en efektif kombinasyonu seç
+        for (let s of siraliKombiler) {
+            let limitBoy = Infinity;
+            let kombiGecerli = true;
+
+            // Kombindeki her bir ebat için havuzda yeterli kumaş var mı kontrol et
+            for (let ebat in s.sayim) {
+                let gerekenAdet = s.sayim[ebat];
+                let havuzdakiMetraj = havuz[ebat] || 0;
+                if (havuzdakiMetraj < 0.05) {
+                    kombiGecerli = false;
+                    break;
+                }
+                // Bu kombiyle tek seferde kesilebilecek maksimum ortak hat boyunu bul
+                let olasiBoy = havuzdakiMetraj / gerekenAdet;
+                if (olasiBoy < limitBoy) limitBoy = olasiBoy;
+            }
+
+            if (kombiGecerli && limitBoy > 0.05) {
+                enIyiKombi = s;
+                maksimumKesimBoyu = limitBoy;
+                break; // En az fire veren ilk geçerli kombiyi bulduğumuz an seçiyoruz
+            }
+        }
+
+        // Eğer havuzu eritecek geçerli kombinasyon kalmadıysa döngüden çık
+        if (!enIyiKombi || maksimumKesimBoyu <= 0.05) {
+            break;
+        }
+
+        // Seçilen en iyi kombinasyon doğrultusunda havuzdaki metrajları düş
+        for (let ebat in enIyiKombi.sayim) {
+            havuz[ebat] -= maksimumKesimBoyu * enIyiKombi.sayim[ebat];
+        }
+
+        // Raporda gösterilecek metinleri derle
+        let urunDetaylari = [];
+        for (let ebat in enIyiKombi.sayim) {
+            let adet = Math.round((maksimumKesimBoyu * enIyiKombi.sayim[ebat]) / birimBoylar[ebat]);
+            urunDetaylari.push(`• ${ebat} cm Eninden: <span class="adet-badge">${adet} Adet</span> (Yan yana ${enIyiKombi.sayim[ebat]} sıra)`);
+        }
+
+        let kombiIsmi = enIyiKombi.kombi.join(" + ") + " cm Düzeni";
+        planlar.push({
+            kombinasyon: kombiIsmi,
+            detay: enIyiKombi.fire === 0 ? "Tam Kusursuz Uyum" : "Dinamik Optimum Dağılım",
+            fire: enIyiKombi.fire,
+            boy: maksimumKesimBoyu,
+            aciklama: `✂️ <b>Hattan Çıkan Net Ürünler:</b><br>${urunDetaylari.join("<br>")}`
+        });
+
+        netToplamBoy += maksimumKesimBoyu;
+        donguLimiti++;
+    }
+
+    // Çıktı Tablosunu Ekrana Bas
+    planlar.forEach((p, idx) => {
+        let borderStyle = `border-left: 5px solid ${['#007aff','#5856d6','#f39c12','#27ae60'][idx % 4]}`;
+        let fireMetni = p.fire > 0 ? `⚠️ Kenar Firesi: ${p.fire} cm` : "✅ En Firesi: 0 cm (Sıfır Fire)";
+        
+        tb.innerHTML += `
+        <tr style="${borderStyle}">
+            <td style="padding: 12px 4px;">
+                <b style="font-size:16px">${p.kombinasyon}</b>
+                <div class="adet-detay-box">${p.aciklama}</div>
+            </td>
+            <td style="padding: 12px 4px;">
+                <div class="plan-box yanyana">${p.detay}</div><br>
+                <span class="fire-badge">${fireMetni}</span>
+            </td>
+            <td style="padding: 12px 4px;"><b style="color:var(--blue); font-size:16px">${Math.ceil(p.boy)} mt</b></td>
+        </tr>`;
+    });
+
+    let yuvarlanmisToplam = Math.ceil(netToplamBoy);
+    let fabrikaRuloBoyu = Math.ceil(yuvarlanmisToplam / 50) * 50;
+    if (yuvarlanmisToplam > 990 && yuvarlanmisToplam < 1030) { fabrikaRuloBoyu = 1000; }
+
+    let toplamDiv = document.getElementById("genelToplamAlani");
+    toplamDiv.innerHTML = `
+        <div class="total-box">
+            <h3>🎯 DOKUMA FABRİKASI SİPARİŞ KARTI (V41)</h3>
+            <p>Müşteri Siparişleri İçin Gerekli Net Dokuma: <b>${yuvarlanmisToplam} metre</b></p>
+            <p style="font-size:16px; color:#155724; background:#d4edda; padding:14px; border-radius:10px; font-weight:bold; margin-top:10px;">
+                Üretim Tezgah Ayarı: <br> Tezgah Eni: ${R_EN} cm | Toplam Çözgü Boyu: ${fabrikaRuloBoyu} metre
+            </p>
+            <small style="color:#555; display:block; margin-top:5px;">✓ V41 Akıllı Matematik Motoru: Veri ne olursa olsun tüm ihtimalleri tarar, önceliği daima sıfıra en yakın fireli kombinasyonlara verir.</small>
+        </div>`;
+
+    document.getElementById("resCard").style.display = "block";
+    document.getElementById("resCard").scrollIntoView({behavior: "smooth"});
 }
 </script>
 </body>
