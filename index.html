@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Halı Kesim PRO AI V53 - Akıllı Parça Entegrasyonu</title>
+    <title>Halı Kesim PRO AI V52 - Canlı & Temiz Başlangıç (Enter Odaklı)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         :root { --p: #27ae60; --bg: #f2f2f7; --blue: #007aff; --red: #ff3b30; --gold: #f39c12; }
@@ -72,7 +72,7 @@
     <h2>3. REÇETE SİPARİŞ LİSTESİ (MÜŞTERİ TALEPLERİ)</h2>
     <div id="ebatlar"></div>
     <button class="add" type="button" onclick="ekle()">+ Yeni Sipariş Satırı Ekle</button>
-    <button class="calc" type="button" onclick="optimizeEtHibrid()">FİRE ANALİZLİ MATRAJ HESAPLA</button>
+    <button class="calc" type="button" onclick="donmasizKombinasyonMotoru()">FİRE ANALİZLİ MATRAJ HESAPLA</button>
     <button class="clear" type="button" onclick="tumSistemiSifirla()">TÜM SAYFAYI SIFIRLA</button>
 </div>
 
@@ -120,51 +120,52 @@ function ekle(enValue = "", boyValue = "", adetValue = "") {
     let div = document.createElement("div");
     div.className = "ebat-row";
     div.innerHTML = `
-        <div><label>Halı Eni (cm)</label><input type="number" class="en" value="${enValue}" placeholder="Örn: 80"></div>
-        <div><label>Boyu (Metre)</label><input type="number" step="0.01" class="boy" value="${boyValue}" placeholder="Örn: 1.5"></div>
-        <div><label>Sipariş Adedi</label><input type="number" class="adet" value="${adetValue}" placeholder="Örn: 10"></div>
+        <div><label>Halı Eni (cm)</label><input type="number" class="en" value="${enValue}" placeholder="Örn: 80" onkeydown="enterKontrol(event, 'en')"></div>
+        <div><label>Boyu (Metre)</label><input type="number" step="0.01" class="boy" value="${boyValue}" placeholder="Örn: 1.5" onkeydown="enterKontrol(event, 'boy')"></div>
+        <div><label>Sipariş Adedi</label><input type="number" class="adet" value="${adetValue}" placeholder="Örn: 10" onkeydown="enterKontrol(event, 'adet')"></div>
         <div><button class="row-del-btn" type="button" onclick="this.closest('.ebat-row').remove()">Sil</button></div>`;
     d.appendChild(div);
 }
 
-// Senin gönderdiğin Best-Fit mantığının optimize edilmiş ve dizilim üreten hali
-function findBestFit(orders, limit) {
-    let bestCombo = null;
-    let bestWaste = Infinity;
-
-    function search(start, combo, total) {
-        let waste = limit - total;
-
-        if (waste >= 0 && waste < bestWaste) {
-            bestWaste = waste;
-            bestCombo = [...combo];
+// Enter tuşuna basıldığında bir sonraki kutuya ya da yeni satıra geçiş fonksiyonu
+function enterKontrol(event, tip) {
+    if (event.key === "Enter") {
+        event.preventDefault(); // Sayfanın/Formun yenilenmesini engeller
+        let currentRow = event.target.closest('.ebat-row');
+        
+        if (tip === 'en') {
+            // En kutusunda enter yapıldıysa aynı satırdaki boy kutusuna geç
+            currentRow.querySelector('.boy').focus();
+        } else if (tip === 'boy') {
+            // Boy kutusunda enter yapıldıysa aynı satırdaki adet kutusuna geç
+            currentRow.querySelector('.adet').focus();
+        } else if (tip === 'adet') {
+            // Adet kutusunda enter yapıldıysa yeni satır ekle ve yeni satırın en kutusuna odaklan
+            ekle("", "", "");
+            let tumSatirlar = document.querySelectorAll('.ebat-row');
+            let yeniSatir = tumSatirlar[tumSatirlar.length - 1];
+            yeniSatir.querySelector('.en').focus();
         }
+    }
+}
 
-        if (total >= limit) return;
-
-        for (let i = start; i < orders.length; i++) {
-            let o = orders[i];
-            if (o.remaining > 0 && total + o.en <= limit) {
-                o.remaining--;
-                combo.push(o); // Sadece en değerini değil nesnenin kendisini atıyoruz (boy takibi için)
-
-                search(i, combo, total + o.en);
-
-                combo.pop();
-                o.remaining++;
+function kombinasyonlariUret(ebatlar, maxEn) {
+    let sonuclar = [];
+    function bul(mevcutKombinasyon, baslangicIndex, mevcutToplam) {
+        if (mevcutToplam > 0) { sonuclar.push([...mevcutKombinasyon]); }
+        for (let i = baslangicIndex; i < ebatlar.length; i++) {
+            if (mevcutToplam + ebatlar[i] <= maxEn) {
+                mevcutKombinasyon.push(ebatlar[i]);
+                bul(mevcutKombinasyon, i, mevcutToplam + ebatlar[i]);
+                mevcutKombinasyon.pop();
             }
         }
     }
-
-    search(0, [], 0);
-
-    return {
-        combo: bestCombo || [],
-        fire: bestWaste === Infinity ? limit : bestWaste
-    };
+    bul([], 0, 0);
+    return sonuclar;
 }
 
-function optimizeEtHibrid() {
+function donmasizKombinasyonMotoru() {
     let R_EN = parseFloat(document.getElementById("rEn").value);
     let F_EN = parseFloat(document.getElementById("fEn").value);
     let M_UNVAN = document.getElementById("mUnvan").value.trim() || "Belirtilmedi";
@@ -176,16 +177,24 @@ function optimizeEtHibrid() {
     }
 
     let rows = document.querySelectorAll(".ebat-row");
-    let orders = [];
+    let havuz = {};
+    let siparisOrijinalDetaylari = {};
+    let benzersizEbatlar = [];
     let veriVarMi = false;
     
-    rows.forEach((row, index) => {
+    rows.forEach(row => {
         let en = parseFloat(row.querySelector(".en").value);
         let boy = parseFloat(row.querySelector(".boy").value) || 0;
-        let adet = parseInt(row.querySelector(".adet").value) || 0;
+        let adet = parseFloat(row.querySelector(".adet").value) || 0;
         
         if (en > 0 && boy > 0 && adet > 0) {
-            orders.push({ id: index, en: en, boy: boy, adet: adet, remaining: adet });
+            let toplamDogrusalMetraj = boy * adet;
+            havuz[en] = (havuz[en] || 0) + toplamDogrusalMetraj;
+            
+            if (!siparisOrijinalDetaylari[en]) siparisOrijinalDetaylari[en] = [];
+            siparisOrijinalDetaylari[en].push({ boy: boy, adet: adet, kalanMetraj: toplamDogrusalMetraj });
+
+            if (!benzersizEbatlar.includes(en)) benzersizEbatlar.push(en);
             veriVarMi = true;
         }
     });
@@ -194,9 +203,6 @@ function optimizeEtHibrid() {
         alert("Lütfen en az bir satıra geçerli ebat ve adet giriniz!");
         return;
     }
-
-    // Büyük enleri öne alacak şekilde akıllı sıralama (Senin sortOrders mantığın)
-    orders.sort((a, b) => b.en - a.en || b.boy - a.boy);
 
     let gununTarihi = new Date().toLocaleDateString('tr-TR');
     document.getElementById("yaziciBaslikAlani").innerHTML = `
@@ -207,66 +213,157 @@ function optimizeEtHibrid() {
         </table>
     `;
 
+    let tumKombiler = kombinasyonlariUret(benzersizEbatlar, F_EN);
+    
+    let siraliKombiler = tumKombiler.map(kombi => {
+        let toplamEn = kombi.reduce((a, b) => a + b, 0);
+        let fire = F_EN - toplamEn;
+        let sayim = {};
+        kombi.forEach(e => { sayim[e] = (sayim[e] || 0) + 1; });
+        
+        let maxEnIçerik = Math.max(...kombi); 
+        return { kombi, fire, sayim, toplamEn, maxEnIçerik };
+    }).sort((a, b) => {
+        if (a.fire !== b.fire) return a.fire - b.fire;
+        return b.maxEnIçerik - a.maxEnIçerik;
+    }); 
+
     let tb = document.getElementById("sonuc");
     tb.innerHTML = "";
+    let planlar = [];
     let netToplamBoy = 0;
-    let idx = 0;
 
-    let safety = 0;
-    // Senin ana döngün: Sipariş adeti sıfırlanana kadar devam eder
-    while (orders.some(o => o.remaining > 0) && safety < 1000) {
-        safety++;
+    let donguLimiti = 0;
+    while (donguLimiti < 200) {
+        let enIyiKombi = null;
+        let maksimumKesimBoyu = 0;
 
-        let best = findBestFit(orders, F_EN);
+        for (let s of siraliKombiler) {
+            if (Object.keys(s.sayim).length === 1 && s.fire > 0) continue;
 
-        if (!best.combo.length) break;
+            let limitBoy = Infinity;
+            let kombiGecerli = true;
 
-        // Çıkan en iyi kombinasyon şeridindeki maksimum boyu tespit ediyoruz
-        let maxBoy = 0;
-        best.combo.forEach(o => { if (o.boy > maxBoy) maxBoy = o.boy; });
+            for (let ebat in s.sayim) {
+                let gerekenAdet = s.sayim[ebat];
+                let havuzdakiMetraj = havuz[ebat] || 0;
+                if (havuzdakiMetraj < 0.01) {
+                    kombiGecerli = false;
+                    break;
+                }
+                let olasiBoy = havuzdakiMetraj / gerekenAdet;
+                if (olasiBoy < limitBoy) limitBoy = olasiBoy;
+            }
 
-        // Senin adet düşme mantığın: Şeritte kullanılan her parçanın adeti bir eksiltilir
-        best.combo.forEach(item => {
-            let found = orders.find(o => o.id === item.id && o.remaining > 0);
-            if (found) found.remaining--;
-        });
-
-        // Ekrana basmak için detayları gruplayalım
-        let ebatlarMetni = best.combo.map(o => o.en).join(" + ") + " cm Düzeni";
-        let sayim = {};
-        best.combo.forEach(o => { sayim[`${o.en} cm x ${o.boy.toFixed(2)} mt`] = (sayim[`${o.en} cm x ${o.boy.toFixed(2)} mt`] || 0) + 1; });
-        
-        let urunDetaylari = [];
-        for (let anahtar in sayim) {
-            urunDetaylari.push(`• <b>${anahtar}</b> Ölçüsünden: <span class="adet-badge">${sayim[anahtar]} Adet</span>`);
+            if (kombiGecerli && limitBoy > 0.01) {
+                enIyiKombi = s;
+                maksimumKesimBoyu = limitBoy;
+                break;
+            }
         }
 
-        // Tasarımsal ayarlar (Usta kalanı mı yoksa yan yana tam düzen mi?)
-        let isUstaKalan = Object.keys(sayim).length === 1 && best.fire > 0;
-        let borderStyle = isUstaKalan 
+        if (!enIyiKombi || maksimumKesimBoyu <= 0.01) break;
+
+        for (let ebat in enIyiKombi.sayim) {
+            havuz[ebat] -= maksimumKesimBoyu * enIyiKombi.sayim[ebat];
+        }
+
+        let urunDetaylari = [];
+        for (let ebat in enIyiKombi.sayim) {
+            let hatSayisi = enIyiKombi.sayim[ebat];
+            let buHatIcinToplamUretilenMetraj = maksimumKesimBoyu * hatSayisi;
+            
+            let listelenenBoylar = siparisOrijinalDetaylari[ebat];
+            let harcanacakMetraj = buHatIcinToplamUretilenMetraj;
+            
+            listelenenBoylar.forEach(sip => {
+                if (harcanacakMetraj <= 0.01 || sip.kalanMetraj <= 0.01) return;
+                
+                let pay = Math.min(harcanacakMetraj, sip.kalanMetraj);
+                let adet = Math.round(pay / sip.boy);
+                if (adet > 0) {
+                    urunDetaylari.push(`• <b>${ebat} cm x ${sip.boy.toFixed(2)} mt</b> Ölçüsünden: <span class="adet-badge">${adet} Adet</span> (Yan yana ${hatSayisi} hat içinde)`);
+                    sip.kalanMetraj -= pay;
+                    harcanacakMetraj -= pay;
+                }
+            });
+        }
+
+        planlar.push({
+            kombinasyon: enIyiKombi.kombi.join(" + ") + " cm Düzeni",
+            detay: enIyiKombi.fire === 0 ? "Tam Kusursuz Uyum" : "Dinamik Matris Dağılımı",
+            fire: enIyiKombi.fire,
+            boy: maksimumKesimBoyu,
+            aciklama: `✂️ <b>Hattan Çıkan Net Ürünler:</b><br>${urunDetaylari.join("<br>")}`
+        });
+
+        netToplamBoy += maksimumKesimBoyu;
+        donguLimiti++;
+    }
+
+    for (let ebat in havuz) {
+        let kalanMetraj = havuz[ebat];
+        if (kalanMetraj > 0.01) {
+            let enSafi = parseFloat(ebat);
+            let maksSira = Math.floor(F_EN / enSafi);
+            if (maksSira < 1) maksSira = 1;
+
+            let ustaKesimBoyu = kalanMetraj / maksSira;
+            let fire = F_EN - (enSafi * maksSira);
+
+            let urunDetaylari = [];
+            let listelenenBoylar = siparisOrijinalDetaylari[ebat];
+            let harcanacakMetraj = kalanMetraj;
+
+            listelenenBoylar.forEach(sip => {
+                if (harcanacakMetraj <= 0.01 || sip.kalanMetraj <= 0.01) return;
+                let pay = Math.min(harcanacakMetraj, sip.kalanMetraj);
+                let adet = Math.round(pay / sip.boy);
+                if (adet > 0) {
+                    urunDetaylari.push(`• <b>${ebat} cm x ${sip.boy.toFixed(2)} mt</b> Ölçüsünden: <span class="adet-badge">${adet} Adet</span> (Yan yana ${maksSira} hat içinde)`);
+                    sip.kalanMetraj -= pay;
+                    harcanacakMetraj -= pay;
+                }
+            });
+
+            let kombiDizilim = [];
+            for(let i=0; i<maksSira; i++) kombiDizilim.push(ebat);
+
+            planlar.push({
+                kombinasyon: kombiDizilim.join(" + ") + " cm Düzeni",
+                detay: "Usta Kalan Ayarı",
+                fire: fire,
+                boy: ustaKesimBoyu,
+                aciklama: `✂️ <b>Kalan Tekil Parçalar Maksimum Hatta Dağıtıldı:</b><br>${urunDetaylari.join("<br>")}`,
+                isUsta: true
+            });
+
+            netToplamBoy += ustaKesimBoyu;
+            havuz[ebat] = 0;
+        }
+    }
+
+    planlar.forEach((p, idx) => {
+        let borderStyle = p.isUsta 
             ? `border-left: 5px solid var(--gold); background: #fffde7;`
             : `border-left: 5px solid ${['#007aff','#5856d6','#27ae60','#f39c12'][idx % 4]};`;
         
-        let planTipiSınıfı = isUstaKalan ? "plan-box tekil-ayari" : "plan-box yanyana";
-        let detayMetni = isUstaKalan ? "Kalan Parça Ayarı" : (best.fire === 0 ? "Kusursuz Tam Uyum" : "Matris Dağılımı");
-        let fireMetni = best.fire > 0 ? `⚠️ Kenar Firesi: ${best.fire} cm` : "✅ En Firesi: 0 cm (Sıfır Fire)";
-
+        let planTipiSınıfı = p.isUsta ? "plan-box tekil-ayari" : "plan-box yanyana";
+        let fireMetni = p.fire > 0 ? `⚠️ Kenar Firesi: ${p.fire} cm` : "✅ En Firesi: 0 cm (Sıfır Fire)";
+        
         tb.innerHTML += `
         <tr style="${borderStyle}">
             <td style="padding: 12px 4px;">
-                <b style="font-size:16px">${ebatlarMetni}</b>
-                <div class="adet-detay-box">✂️ <b>Hattan Çıkan Net Ürünler:</b><br>${urunDetaylari.join("<br>")}</div>
+                <b style="font-size:16px">${p.kombinasyon}</b>
+                <div class="adet-detay-box">${p.aciklama}</div>
             </td>
             <td style="padding: 12px 4px;">
-                <div class="${planTipiSınıfı}">${detayMetni}</div><br>
+                <div class="${planTipiSınıfı}">${p.detay}</div><br>
                 <span class="fire-badge">${fireMetni}</span>
             </td>
-            <td style="padding: 12px 4px;"><b style="color:var(--blue); font-size:16px">${maxBoy.toFixed(2)} mt</b></td>
+            <td style="padding: 12px 4px;"><b style="color:var(--blue); font-size:16px">${p.boy.toFixed(2)} mt</b></td>
         </tr>`;
-
-        netToplamBoy += maxBoy;
-        idx++;
-    }
+    });
 
     let yuvarlanmisToplam = Math.ceil(netToplamBoy);
     let fabrikaRuloBoyu = Math.ceil(yuvarlanmisToplam / 50) * 50;
@@ -274,13 +371,12 @@ function optimizeEtHibrid() {
     let toplamDiv = document.getElementById("genelToplamAlani");
     toplamDiv.innerHTML = `
         <div class="total-box">
-            <h3>🎯 DOKUMA FABRİKASI SİPARİŞ KARTI (V53)</h3>
+            <h3>🎯 DOKUMA FABRİKASI SİPARİŞ KARTI (V52)</h3>
             <p>Müşteri Ünvanı: <b style="font-size:16px; color:var(--blue);">${M_UNVAN}</b> | Kalite: <b style="font-size:16px; color:var(--blue);">${H_KALITE}</b></p>
             <p>Müşteri Siparişleri İçin Gerekli Net Dokuma: <b>${netToplamBoy.toFixed(2)} metre</b> (Yuvarlatılmış: ${yuvarlanmisToplam} mt)</p>
             <p style="font-size:16px; color:#155724; background:#d4edda; padding:14px; border-radius:10px; font-weight:bold; margin-top:10px;">
                 Üretim Tezgah Ayarı: <br> Tezgah Eni: ${R_EN} cm | Toplam Çözgü Boyu: ${fabrikaRuloBoyu} metre
             </p>
-            <small style="color:#555; display:block; margin-top:5px;">✓ V53 Sürümü: Gönderdiğiniz adet bazlı Best-Fit optimizasyon motoru başarıyla entegre edilmiştir.</small>
         </div>`;
 
     document.getElementById("resCard").style.display = "block";
@@ -289,4 +385,3 @@ function optimizeEtHibrid() {
 </script>
 </body>
 </html>
-
